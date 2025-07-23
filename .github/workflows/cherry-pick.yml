@@ -1,0 +1,59 @@
+name: Cherry-pick PR and Create PR to Product Repo
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Repo to cherry-pick'
+        default: 'autoware_universe'
+        required: true
+      pr_number:
+        description: 'PR number in main repo to cherry-pick'
+        required: true
+      target_branch:
+        description: 'Target branch in product repo'
+        required: true
+
+jobs:
+  cherry_pick:
+    runs-on: ubuntu-latest
+    env:
+      MAIN_REPO: autowarefoundation/${{ github.event.inputs.repo }}
+      PRODUCT_REPO: tier4/${{ github.event.inputs.repo }}
+      PAT: ${{ secrets.PAT }}
+    steps:
+      - name: Install gh CLI
+        uses: cli/gh-action@v2
+        with:
+          github-token: ${{ secrets.PAT }}
+
+      - name: Get merge commit SHA from main repo
+        id: get_sha
+        run: |
+          PR_NUM="${{ github.event.inputs.pr_number }}"
+          SHA=$(gh pr view $PR_NUM --repo "$MAIN_REPO" --json mergeCommit --jq '.mergeCommit.oid')
+          echo "merge_sha=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Clone product repo
+        run: |
+          git clone https://$PAT@github.com/${PRODUCT_REPO}.git product-repo
+          cd product-repo
+          git checkout ${{ github.event.inputs.target_branch }}
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git cherry-pick ${{ steps.get_sha.outputs.merge_sha }}
+
+          BRANCH_NAME=cherry-pick-pr-${{ github.event.inputs.pr_number }}
+          git checkout -b $BRANCH_NAME
+          git push origin $BRANCH_NAME
+
+      - name: Create PR in product repo
+        run: |
+          gh pr create \
+            --repo "$PRODUCT_REPO" \
+            --base "${{ github.event.inputs.target_branch }}" \
+            --head "$BRANCH_NAME" \
+            --title "Cherry-pick PR #${{ github.event.inputs.pr_number }}" \
+            --body "Cherry-picked from $MAIN_REPO PR #${{ github.event.inputs.pr_number }}"
