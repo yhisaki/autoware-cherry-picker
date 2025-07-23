@@ -53,6 +53,7 @@ jobs:
       - name: Create PR in product repo
         run: |
           cd product-repo
+          echo ${{ secrets.PAT }} | gh auth login --with-token
           gh pr create \
             --repo "$PRODUCT_REPO" \
             --base "${{ github.event.inputs.target_branch }}" \
