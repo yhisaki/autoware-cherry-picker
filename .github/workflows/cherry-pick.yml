@@ -21,12 +21,8 @@ jobs:
       MAIN_REPO: autowarefoundation/${{ github.event.inputs.repo }}
       PRODUCT_REPO: tier4/${{ github.event.inputs.repo }}
       PAT: ${{ secrets.PAT }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Install gh CLI
-        uses: cli/gh-action@v2
-        with:
-          github-token: ${{ secrets.PAT }}
-
       - name: Get merge commit SHA from main repo
         id: get_sha
         run: |
