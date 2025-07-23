@@ -45,7 +45,15 @@ jobs:
 
           git cherry-pick ${{ steps.get_sha.outputs.merge_sha }}
 
-          BRANCH_NAME=cherry-pick-pr-${{ github.event.inputs.pr_number }}
+          BASE_BRANCH_NAME=cherry-pick-pr-${{ github.event.inputs.pr_number }}
+          BRANCH_NAME=$BASE_BRANCH_NAME
+          COUNTER=1
+          
+          while git ls-remote --exit-code origin "refs/heads/$BRANCH_NAME" > /dev/null 2>&1; do
+            BRANCH_NAME="${BASE_BRANCH_NAME}-${COUNTER}"
+            COUNTER=$((COUNTER + 1))
+          done
+
           git checkout -b $BRANCH_NAME
           git push origin $BRANCH_NAME
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
