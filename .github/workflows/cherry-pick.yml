@@ -28,6 +28,8 @@ jobs:
         run: |
           PR_NUM="${{ github.event.inputs.pr_number }}"
           SHA=$(gh pr view $PR_NUM --repo "$MAIN_REPO" --json mergeCommit --jq '.mergeCommit.oid')
+          TITLE=$(gh pr view $PR_NUM --repo "$MAIN_REPO" --json title --jq '.title')
+          URL=$(gh pr view $PR_NUM --repo "$MAIN_REPO" --json url --jq '.url')
           echo "merge_sha=$SHA" >> $GITHUB_OUTPUT
 
       - name: Clone product repo
@@ -47,9 +49,10 @@ jobs:
 
       - name: Create PR in product repo
         run: |
+          cd product-repo
           gh pr create \
             --repo "$PRODUCT_REPO" \
             --base "${{ github.event.inputs.target_branch }}" \
             --head "$BRANCH_NAME" \
-            --title "Cherry-pick PR #${{ github.event.inputs.pr_number }}" \
-            --body "Cherry-picked from $MAIN_REPO PR #${{ github.event.inputs.pr_number }}"
+            --title "$TITLE" \
+            --body "Cherry-picked from $URL"
