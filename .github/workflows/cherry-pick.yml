@@ -21,7 +21,7 @@ jobs:
       MAIN_REPO: autowarefoundation/${{ github.event.inputs.repo }}
       PRODUCT_REPO: tier4/${{ github.event.inputs.repo }}
       PAT: ${{ secrets.PAT }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.PAT }}
     steps:
       - name: Get merge commit SHA from main repo
         id: get_sha
